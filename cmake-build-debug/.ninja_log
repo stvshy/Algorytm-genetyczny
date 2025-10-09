@@ -1,0 +1,6 @@
+# ninja log v5
+6127	7547	7273839859130167	PEA_3.exe	d05f56132d7578ad
+3	5703	7273839840758929	CMakeFiles/PEA_3.dir/Graf.cpp.obj	1e3ddfcae43473a0
+7	5544	7273839839183149	CMakeFiles/PEA_3.dir/main.cpp.obj	694ac07bb5fe3a74
+13	6126	7273839845002643	CMakeFiles/PEA_3.dir/Genetyczny.cpp.obj	28c05b39c3c35aa1
+10	5663	7273839840330080	CMakeFiles/PEA_3.dir/Menu.cpp.obj	3f5d8ca505ca72e8
