@@ -1,6 +1,5 @@
 #include <vector>
 #include "Menu.h"
-#include "Menu.h"
 #include "Genetyczny.h"
 
 using namespace std;
@@ -22,7 +21,7 @@ int Menu::mainMenu() {
     int kryteriumStopu = 15;
     double wspolczynnikMutacji = 0.01;
     double wspolczynnikKrzyzowania = 0.8;
-    int metodaKrzyzowania = 1;
+//    int metodaKrzyzowania = 1;
     string nazwa;
 
     while (true) {
@@ -36,9 +35,7 @@ int Menu::mainMenu() {
              << "3. Ustaw wielkosc populacji poczatkowej" << endl
              << "4. Ustaw wspolczynnik mutacji" << endl
              << "5. Ustaw wspolczynnik krzyzowania" << endl
-             << "6. Wybor metody krzyzowania" << endl
-             << "7. Wybor metody mutacji" << endl
-             << "8. Rozwiaz algorytmem genetycznym" << endl
+             << "6. Rozwiaz algorytmem genetycznym" << endl
              << "0. Wyjscie" << endl << endl;
         cout << "Wpisz swoj wybor: ";
         // Odczytanie wyboru użytkownika
@@ -74,34 +71,14 @@ int Menu::mainMenu() {
                 cout << endl;
                 break;
             case '6':
-                cout << "Podaj metode krzyzowania " << endl
-                << "1. OX" << endl
-                << "2. PBX" << endl << endl;
-                cout << "Wpisz swoj wybor: ";
-                cin >> metodaKrzyzowania;
-                cout << endl;
-                break;
-            case '7':
-                cout << "Podaj metode mutacji: ";
-
-                cout << endl;
-                break;
-            case '8':
                 if (!graf.macierzKosztow.empty()) {
-                    Genetyczny
-                    genetyczny(graf, kryteriumStopu, wielkoscPopulacji, wspolczynnikMutacji, wspolczynnikKrzyzowania, metodaKrzyzowania);
+                    Genetyczny genetyczny(graf, kryteriumStopu, wielkoscPopulacji, wspolczynnikMutacji, wspolczynnikKrzyzowania);
                     genetyczny.algorytm();
                     cout << "Koszt: " << genetyczny.najlepszeRozwiazanie.koszt << endl;
                     cout << "Czas najl. rozw.: " <<genetyczny.czasNajlepszegoRozwiazania << endl;
                     genetyczny.wypiszTrase(genetyczny.najlepszeRozwiazanie.chromosom);
                 }
                 break;
-            case '9':
-                if (!graf.macierzKosztow.empty()) {
-
-                }
-                break;
-                // W przypadku wybrania opcji wyjścia zamknij, jeżeli wybrano 0
             case '0':
                 cout << "Zakonczenie programu" << endl;
                 return 0;

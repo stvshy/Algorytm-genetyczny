@@ -13,10 +13,10 @@ using namespace std;
 Genetyczny::Genetyczny() {}
 
 // Konstruktor
-Genetyczny::Genetyczny(Graf g, int czas, int wielkoscPopulacji, double wspolczynnikMutacji, double wspolczynnikKrzyzowania, int metodaKrzyzowania) {
+Genetyczny::Genetyczny(Graf g, int czas, int wielkoscPopulacji, double wspolczynnikMutacji, double wspolczynnikKrzyzowania) {
     macierzKosztow = g.macierzKosztow;
     liczbaMiast = g.liczbaMiast;
-    this->metodaKrzyzowania = metodaKrzyzowania;
+//    this->metodaKrzyzowania = metodaKrzyzowania;
     this->wielkoscPopulacji = wielkoscPopulacji;
     this->wspolczynnikMutacji = wspolczynnikMutacji;
     this->wspolczynnikKrzyzowania = wspolczynnikKrzyzowania;
@@ -24,6 +24,8 @@ Genetyczny::Genetyczny(Graf g, int czas, int wielkoscPopulacji, double wspolczyn
     najlepszeRozwiazanie.koszt = INT_MAX;
     najlepszeRozwiazanie.chromosom.resize(g.liczbaMiast, -1);
     czasNajlepszegoRozwiazania = 0;
+    random_device rd;
+    generator.seed(rd());
 }
 
 // Destruktor
@@ -35,7 +37,7 @@ Genetyczny::~Genetyczny() {
     czasNajlepszegoRozwiazania = 0;
 }
 
-// Funkcja pomocnicza do porównywania kosztów osobników
+// Funkcja pomocnicza do porÃ³wnywania kosztÃ³w osobnikÃ³w
 bool Genetyczny::porownajKoszty(const Osobnik &pierwsza, const Osobnik &druga) {
     return (pierwsza.koszt < druga.koszt);
 }
@@ -44,7 +46,7 @@ bool Genetyczny::porownajKoszty(const Osobnik &pierwsza, const Osobnik &druga) {
 int Genetyczny::obliczKoszt(vector<int> &sciezka) {
     int suma = 0;
     int rozmiar = sciezka.size();
-
+    if (rozmiar < 2) return 0; // Zabezpieczenie przed pustÄ… Å›cieÅ¼kÄ…
     for (int i = 0; i < rozmiar - 1; i++) {
         suma += macierzKosztow[sciezka[i]][sciezka[i + 1]];
     }
@@ -53,7 +55,7 @@ int Genetyczny::obliczKoszt(vector<int> &sciezka) {
     return suma;
 }
 
-// Wyœwietlanie trasy
+// WyÅ›wietlanie trasy
 void Genetyczny::wypiszTrase(vector<int> sciezka) {
 
     for (int i = 0; i < liczbaMiast; i++) {
@@ -64,18 +66,17 @@ void Genetyczny::wypiszTrase(vector<int> sciezka) {
 
 // Mutacja osobnika
 Osobnik Genetyczny::Mutacja(Osobnik osobnik) {
+    uniform_int_distribution<int> dist(0, liczbaMiast - 1);
+    int pierwsza = dist(generator);
+    int druga = dist(generator);
 
-    int pierwsza, druga;
-
-    do {
-        pierwsza = rand() % liczbaMiast;
-        druga = rand() % liczbaMiast;
-    } while (pierwsza == druga);
+    // Prostszy sposÃ³b na zapewnienie, Å¼e nie sÄ… takie same
+    if (pierwsza == druga) {
+        druga = (pierwsza + 1) % liczbaMiast;
+    }
 
     swap(osobnik.chromosom[pierwsza], osobnik.chromosom[druga]);
-
     osobnik.koszt = obliczKoszt(osobnik.chromosom);
-
     return osobnik;
 }
 
@@ -83,14 +84,16 @@ Osobnik Genetyczny::Mutacja(Osobnik osobnik) {
 Osobnik Genetyczny::KrzyzowanieOX(Osobnik &tata, Osobnik &mama) {
     Osobnik dziecko; // Inicjalizacja dziecka jako nowego osobnika
     int rozmiarRodzica = tata.chromosom.size(); // Pobranie rozmiaru chromosomu rodzica
-    int punktPoczatkowy = rand() % rozmiarRodzica; // Losowanie punktu pocz¹tkowego krzy¿owania
-    int punktKoncowy = rand() % rozmiarRodzica; // Losowanie punktu koñcowego krzy¿owania
+
+    uniform_int_distribution<int> dist(0, rozmiarRodzica - 1);
+    int punktPoczatkowy = dist(generator);
+    int punktKoncowy = dist(generator);
 
     if (punktPoczatkowy > punktKoncowy) {
-        swap(punktPoczatkowy, punktKoncowy); // Zamiana punktów pocz¹tkowego i koñcowego, jeœli pocz¹tkowy jest wiêkszy od koñcowego
+        swap(punktPoczatkowy, punktKoncowy); // Zamiana punktÃ³w poczÄ…tkowego i koÅ„cowego, jeÅ›li poczÄ…tkowy jest wiÄ™kszy od koÅ„cowego
     }
 
-    dziecko.chromosom.resize(rozmiarRodzica); // Zmiana rozmiaru chromosomu dziecka na rozmiar rodzica (rezerwacja miejsca w pamiêci)
+    dziecko.chromosom.resize(rozmiarRodzica); // Zmiana rozmiaru chromosomu dziecka na rozmiar rodzica (rezerwacja miejsca w pamiÄ™ci)
 
     for (int i = punktPoczatkowy; i <= punktKoncowy; ++i) {
         dziecko.chromosom[i] = tata.chromosom[i]; // Kopiowanie fragmentu chromosomu taty do chromosomu dziecka
@@ -99,67 +102,22 @@ Osobnik Genetyczny::KrzyzowanieOX(Osobnik &tata, Osobnik &mama) {
     int indexDziecka = 0;
     for (int i = 0; i < rozmiarRodzica; ++i) {
         if (indexDziecka == punktPoczatkowy) {
-            indexDziecka = punktKoncowy + 1; // Ustawienie indeksu dziecka na pozycjê za koñcem wstawianego fragmentu
+            indexDziecka = punktKoncowy + 1; // Ustawienie indeksu dziecka na pozycjÄ™ za koÅ„cem wstawianego fragmentu
         }
 
         if (find(dziecko.chromosom.begin(), dziecko.chromosom.end(), mama.chromosom[i]) == dziecko.chromosom.end()) {
-            dziecko.chromosom[indexDziecka] = mama.chromosom[i]; // Wstawianie wartoœci z chromosomu mamy do dziecka, jeœli nie wystêpuj¹ jeszcze w miejscu wstawiania
+            dziecko.chromosom[indexDziecka] = mama.chromosom[i]; // Wstawianie wartoÅ›ci z chromosomu mamy do dziecka, jeÅ›li nie wystÄ™pujÄ… jeszcze w miejscu wstawiania
             ++indexDziecka;
         }
     }
 
     dziecko.koszt = obliczKoszt(dziecko.chromosom); // Obliczenie kosztu trasy dziecka
-    return dziecko; // Zwrócenie nowego osobnika
+    return dziecko; // ZwrÃ³cenie nowego osobnika
 }
 
 
-//Position-based crossover (PBX)
-Osobnik Genetyczny::KrzyzowaniePBX(Osobnik &tata, Osobnik &mama) {
-    int rozmiarRodzica = tata.chromosom.size();
-    Osobnik dziecko;
-    dziecko.chromosom.resize(rozmiarRodzica, -1); // Inicjalizacja chromosomu dziecka z wartoœciami -1
 
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> dis(0, rozmiarRodzica - 1); // Inicjalizacja generatora liczb losowych
-
-    int iloscPunktow = dis(gen); // Losowanie iloœci punktów do krzy¿owania
-
-    unordered_set<int> wybraneWartosci; // Utworzenie zbioru przechowuj¹cego wybrane wartoœci z chromosomu matki
-    while (wybraneWartosci.size() < iloscPunktow) {
-        int randomIndex = dis(gen);
-        wybraneWartosci.insert(mama.chromosom[randomIndex]); // Wybór losowych wartoœci z chromosomu matki
-    }
-
-    for (int punkt : wybraneWartosci) {
-        auto index = find(tata.chromosom.begin(), tata.chromosom.end(), punkt);
-        dziecko.chromosom[index - tata.chromosom.begin()] = punkt; // Wstawianie wybranych wartoœci z matki do dziecka na tych samych pozycjach
-    }
-
-    vector<int> dostepnePozycje;
-    for (int i = 0; i < rozmiarRodzica; ++i) {
-        if (dziecko.chromosom[i] == -1) {
-            dostepnePozycje.push_back(i); // Zbieranie pozycji w chromosomie dziecka, gdzie nie ma jeszcze wartoœci
-        }
-    }
-
-    int index = 0;
-    for (int i = 0; i < rozmiarRodzica; ++i) {
-        if (wybraneWartosci.find(mama.chromosom[i]) == wybraneWartosci.end()) {
-            if (index < dostepnePozycje.size()) {
-                dziecko.chromosom[dostepnePozycje[index]] = mama.chromosom[i]; // Wstawianie wartoœci z chromosomu matki do wolnych miejsc w chromosomie dziecka
-                ++index;
-            } else {
-                break; // Przerwanie, jeœli osi¹gniêto maksymalny rozmiar dziecka
-            }
-        }
-    }
-    dziecko.koszt = obliczKoszt(dziecko.chromosom); // Obliczenie kosztu trasy dziecka
-    return dziecko; // Zwrócenie nowego osobnika
-}
-
-
-// Generowanie pocz¹tkowej populacji
+// Generowanie poczÄ…tkowej populacji
 vector<Osobnik> Genetyczny::wygenerujPopulacje() {
     vector<Osobnik> populacja;
     Osobnik p;
@@ -168,7 +126,7 @@ vector<Osobnik> Genetyczny::wygenerujPopulacje() {
         for (int j = 0; j < liczbaMiast; j++) {
             p.chromosom.push_back(j);
         }
-        random_shuffle(p.chromosom.begin(), p.chromosom.end());
+        shuffle(p.chromosom.begin(), p.chromosom.end(), generator);
         p.koszt = obliczKoszt(p.chromosom);
         populacja.push_back(p);
         p.chromosom.clear();
@@ -177,94 +135,85 @@ vector<Osobnik> Genetyczny::wygenerujPopulacje() {
     return populacja;
 }
 
-// Selekcja osobników w populacji metod¹ proporcjonaln¹
-void Genetyczny::Selekcja(vector<Osobnik> &populacja) {
-    // Sortowanie populacji wzglêdem kosztu
-    sort(populacja.begin(), populacja.end(), porownajKoszty);
+// Selekcja osobnikÃ³w w populacji metodÄ… proporcjonalnÄ…
+// Nowa, poprawna wersja funkcji w Genetyczny.cpp
+Osobnik Genetyczny::selekcjaTurniejowa() {
+    int rozmiarTurnieju = 5;
+    if (populacja.empty()) return Osobnik(); // Zabezpieczenie na wszelki wypadek
 
+    // UÅ¼ywamy naszego generatora z klasy
+    uniform_int_distribution<int> dist(0, populacja.size() - 1);
 
+    // Pierwszy losowy uczestnik turnieju staje siÄ™ tymczasowym zwyciÄ™zcÄ…
+    Osobnik najlepszyWTurnieju = populacja[dist(generator)];
 
-    int rozmiarPopulacji = populacja.size();
-
-    // Tworzenie tablicy zawieraj¹cej wartoœci odwrotnych rang
-    vector<double> odwroconeRangi;
-    for (int i = 0; i < rozmiarPopulacji; ++i) {                // (N = 100)
-        odwroconeRangi.push_back(double(rozmiarPopulacji - i)); //100, 99, 98...
-    }
-
-    // Tworzenie tablicy zawieraj¹cej prawdopodobieñstwa wyboru dla poszczególnych osobników
-    vector<double> prawdopodobienstwa;
-
-    // Tworzenie nowej populacji na podstawie prawdopodobieñstw wyboru
-    vector<Osobnik> nowaPopulacja;
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_real_distribution<> dis(0.0, 1.0);
-
-    for (size_t i = 0; i < rozmiarPopulacji; ++i) {
-        double losowaWartosc = dis(gen); // Losowa wartoœæ od 0 do 1
-
-        // Wybieranie osobnika z populacji na podstawie wartoœci losowej i prawdopodobieñstw wyboru
-        for (size_t j = 0; j < rozmiarPopulacji; ++j) {
-            if (losowaWartosc <= odwroconeRangi[j]/rozmiarPopulacji) {
-                nowaPopulacja.push_back(populacja[j]); // Dodanie wybranego osobnika do nowej populacji
-                break;
-            }
+    // Losujemy resztÄ™ uczestnikÃ³w i porÃ³wnujemy
+    for (int j = 1; j < rozmiarTurnieju; ++j) {
+        Osobnik kandydat = populacja[dist(generator)];
+        if (kandydat.koszt < najlepszyWTurnieju.koszt) {
+            najlepszyWTurnieju = kandydat;
         }
     }
-
-    // Przypisanie nowej populacji do populacji pierwotnej
-    populacja = nowaPopulacja;
+    // Zwracamy JEDNEGO zwyciÄ™zcÄ™ turnieju
+    return najlepszyWTurnieju;
 }
-
-// G³ówny algorytm genetyczny
+// GÅ‚Ã³wny algorytm genetyczny
 void Genetyczny::algorytm() {
-    srand((unsigned)time(NULL));
+    // srand() nie jest juÅ¼ potrzebne, bo uÅ¼ywamy generatora mt19937
+    // srand((unsigned)time(NULL));
 
     double czas = 0;
     clock_t start = clock();
 
-    vector<Osobnik> populacja = wygenerujPopulacje();
-    Osobnik dziecko;
+    populacja = wygenerujPopulacje(); // UÅ¼yj zmiennej czÅ‚onkowskiej 'populacja'
+
+    // GÅ‚Ã³wna pÄ™tla ewolucji
     do {
-        Selekcja(populacja);
+        // 1. StwÃ³rz pustÄ… populacjÄ™ na nastÄ™pnÄ… generacjÄ™
+        vector<Osobnik> nastepnaPopulacja;
 
-        while(populacja.size()<wielkoscPopulacji) {
-            int x, y;
-            do {
-                x = rand() % wielkoscPopulacji;
-                y = rand() % wielkoscPopulacji;
-            } while (x == y);
-
-            if (double(rand()) / (double(RAND_MAX)) < wspolczynnikKrzyzowania) {
-                if (metodaKrzyzowania == 1){
-                    dziecko = KrzyzowanieOX(populacja[x], populacja[y]);
-                    populacja.push_back(dziecko);
-                }
-                else {
-                    dziecko = KrzyzowaniePBX(populacja[x], populacja[y]);
-                    populacja.push_back(dziecko);
-                }
-                x++, y++;
-            }
-        }
-
-        for (int j = 0; j < populacja.size(); j++) {
-            if ((double)rand() / RAND_MAX < wspolczynnikMutacji) {
-                populacja[j] = Mutacja(populacja[j]);
-            }
-        }
-
+        // 2. Elitaryzm: Zachowaj najlepszego osobnika z obecnej populacji
         sort(populacja.begin(), populacja.end(), porownajKoszty);
+        nastepnaPopulacja.push_back(populacja.front());
 
+        // 3. WypeÅ‚nij resztÄ™ nowej populacji przez selekcjÄ™, krzyÅ¼owanie i mutacjÄ™
+        while (nastepnaPopulacja.size() < wielkoscPopulacji) {
+            // Wybierz rodzicÃ³w za pomocÄ… selekcji turniejowej z obecnej populacji
+            Osobnik tata = selekcjaTurniejowa();
+            Osobnik mama = selekcjaTurniejowa();
+
+            Osobnik dziecko;
+
+            // KrzyÅ¼owanie z zadanym prawdopodobieÅ„stwem
+            uniform_real_distribution<> dist(0.0, 1.0);
+            if (dist(generator) < wspolczynnikKrzyzowania) {
+                dziecko = KrzyzowanieOX(tata, mama);
+            } else {
+                // JeÅ›li nie ma krzyÅ¼owania, dziecko jest kopiÄ… jednego z rodzicÃ³w
+                dziecko = tata;
+            }
+
+            // Mutacja z zadanym prawdopodobieÅ„stwem
+            if (dist(generator) < wspolczynnikMutacji) {
+                dziecko = Mutacja(dziecko);
+            }
+
+            nastepnaPopulacja.push_back(dziecko);
+        }
+
+        // 4. ZastÄ…p starÄ… populacjÄ™ nowÄ…
+        populacja = nastepnaPopulacja;
+
+        // 5. Zaktualizuj najlepsze globalne rozwiÄ…zanie
+        sort(populacja.begin(), populacja.end(), porownajKoszty);
         if (populacja.front().koszt < najlepszeRozwiazanie.koszt) {
-            najlepszeRozwiazanie.koszt = populacja.front().koszt;
-            cout << najlepszeRozwiazanie.koszt <<" " << (clock() - start) / (double)CLOCKS_PER_SEC << endl;
-            najlepszeRozwiazanie.chromosom = populacja.front().chromosom;
+            najlepszeRozwiazanie = populacja.front();
             czasNajlepszegoRozwiazania = (clock() - start) / (double)CLOCKS_PER_SEC;
+            cout << "Nowy najlepszy koszt: " << najlepszeRozwiazanie.koszt
+                 << " w czasie: " << czasNajlepszegoRozwiazania << "s" << endl;
         }
 
         czas = (clock() - start) / (double)CLOCKS_PER_SEC;
 
-    } while(czas < czasTrwania);
+    } while (czas < czasTrwania);
 }

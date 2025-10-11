@@ -2,9 +2,8 @@
 #define PEA_3_GENETYCZNY_H
 
 #include <vector>
+#include <random>
 #include "Graf.h"
-
-using namespace std;
 
 struct Osobnik {
     vector<int> chromosom;
@@ -15,27 +14,29 @@ class Genetyczny {
 private:
     vector<vector<int>> macierzKosztow;
     Graf graf;
-    int rozmiar; // ile miast
+//    int rozmiar; // ile miast
     int wielkoscPopulacji; // wielkosc populacji
-    int metodaKrzyzowania;
+//    int metodaKrzyzowania;
     double wspolczynnikMutacji; // wspolczynnik mutacji
     double wspolczynnikKrzyzowania; // wspolczynnik krzyzowania
     vector<Osobnik> populacja; // chromosom
-    void Selekcja(vector<Osobnik> &populacja);
+    // Po zmianie
+    Osobnik selekcjaTurniejowa();
     Osobnik Mutacja(Osobnik osobnik);
     Osobnik KrzyzowanieOX(Osobnik &tata, Osobnik &mama);
-    Osobnik KrzyzowaniePBX(Osobnik &tata, Osobnik &mama);
+//    Osobnik KrzyzowaniePBX(Osobnik &tata, Osobnik &mama);
     vector<Osobnik> wygenerujPopulacje();
     static bool porownajKoszty(const Osobnik &pierwsza, const Osobnik &druga);
     int obliczKoszt(vector<int> &sciezka);
     int liczbaMiast;
     int czasTrwania;
+    mt19937 generator;
 public:
-    double czasNajlepszegoRozwiazania;int id;
+    double czasNajlepszegoRozwiazania;
 
     Osobnik najlepszeRozwiazanie; // najlepsze znalezione rozwiazanie
     Genetyczny();
-    Genetyczny(Graf graf,int czas, int wielkoscPopulacji, double wspolczynnikMutacji, double wspolczynnikKrzyzowania, int metodaKrzyzowania);
+    Genetyczny(Graf graf, int czas, int wielkoscPopulacji, double wspolczynnikMutacji, double wspolczynnikKrzyzowania);
     ~Genetyczny();
     void wypiszTrase(vector<int> sciezka);
     void algorytm();
