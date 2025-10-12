@@ -10,7 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
-
+#include <string>
 using namespace std;
 
 class Graf
@@ -23,15 +23,9 @@ public:
     Graf();
     ~Graf();
     void wczytajPlik();
-    void generujLosowo();
-    int obliczKoszt(int skad, int dokad);
-    void wyczysc();
-//    void dodajKrawedz(int row, int value);
-    void dodajKrawedz(int skad, int dokad, int koszt);
-    void wypiszGraf();
+    void wczytajPlik(const string& nazwaPliku);
     vector<vector<int>> macierzKosztow;
-
-    void generujLosowo(int n);
+    string nazwaZaladowanegoPliku;
 };
 
 

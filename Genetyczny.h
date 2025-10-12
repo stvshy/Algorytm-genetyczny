@@ -27,7 +27,7 @@ private:
 //    Osobnik KrzyzowaniePBX(Osobnik &tata, Osobnik &mama);
     vector<Osobnik> wygenerujPopulacje();
     static bool porownajKoszty(const Osobnik &pierwsza, const Osobnik &druga);
-    int obliczKoszt(vector<int> &sciezka);
+    int obliczKoszt(const vector<int> &sciezka);
     int liczbaMiast;
     int czasTrwania;
     mt19937 generator;
@@ -38,7 +38,7 @@ public:
     Genetyczny();
     Genetyczny(Graf graf, int czas, int wielkoscPopulacji, double wspolczynnikMutacji, double wspolczynnikKrzyzowania);
     ~Genetyczny();
-    void wypiszTrase(vector<int> sciezka);
+    void wypiszTrase(const vector<int> &sciezka);
     void algorytm();
 
 };

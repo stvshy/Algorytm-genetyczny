@@ -7,6 +7,7 @@
 #include <numeric>
 #include <random>
 #include <unordered_set>
+#include <optional>
 
 using namespace std;
 
@@ -21,11 +22,11 @@ Genetyczny::Genetyczny(Graf g, int czas, int wielkoscPopulacji, double wspolczyn
     this->wspolczynnikMutacji = wspolczynnikMutacji;
     this->wspolczynnikKrzyzowania = wspolczynnikKrzyzowania;
     czasTrwania = czas;
-    najlepszeRozwiazanie.koszt = INT_MAX;
-    najlepszeRozwiazanie.chromosom.resize(g.liczbaMiast, -1);
-    czasNajlepszegoRozwiazania = 0;
-    random_device rd;
-    generator.seed(rd());
+    najlepszeRozwiazanie.koszt = INT_MAX; // Maksmymalna wartość na start, Osobnik to chromosom (trasa) + koszt (całej trasy)
+    najlepszeRozwiazanie.chromosom.resize(g.liczbaMiast, -1); // Inicjalizacja chromosomu, resize do liczby miast, wypełnienie -1
+    czasNajlepszegoRozwiazania = 0; // Inicjalizacja czasu (start od 0)
+    random_device rd; // Pobierz losowe ziarno z systemu (za każdym uruchomieniem programu inne)
+    generator.seed(rd()); // Ustaw to ziarno w generatorze, żeby nie generował tych samych liczb co ostatnio
 }
 
 // Destruktor
@@ -38,25 +39,25 @@ Genetyczny::~Genetyczny() {
 }
 
 // Funkcja pomocnicza do porównywania kosztów osobników
-bool Genetyczny::porownajKoszty(const Osobnik &pierwsza, const Osobnik &druga) {
+bool Genetyczny::porownajKoszty(const Osobnik &pierwsza, const Osobnik &druga) { // dzięki referencji unikamy kopiowania całych osobników (oszczędność pamięci i czasu), const bo nie zmieniamy ich
     return (pierwsza.koszt < druga.koszt);
 }
 
 // Obliczanie kosztu trasy
-int Genetyczny::obliczKoszt(vector<int> &sciezka) {
+int Genetyczny::obliczKoszt(const vector<int> &sciezka) {
     int suma = 0;
     int rozmiar = sciezka.size();
     if (rozmiar < 2) return 0; // Zabezpieczenie przed pustą ścieżką
     for (int i = 0; i < rozmiar - 1; i++) {
-        suma += macierzKosztow[sciezka[i]][sciezka[i + 1]];
+        suma += macierzKosztow[sciezka[i]][sciezka[i + 1]];  // Dodaj koszt przejścia z miasta i do i+1
     }
-    suma += macierzKosztow[sciezka[rozmiar - 1]][sciezka[0]];
+    suma += macierzKosztow[sciezka[rozmiar - 1]][sciezka[0]]; // Dodaj koszt powrotu do miasta startowego z ostatniego miasta
 
     return suma;
 }
 
 // Wyświetlanie trasy
-void Genetyczny::wypiszTrase(vector<int> sciezka) {
+void Genetyczny::wypiszTrase(const vector<int> &sciezka) {
 
     for (int i = 0; i < liczbaMiast; i++) {
         cout << sciezka[i] << "->";
@@ -66,13 +67,13 @@ void Genetyczny::wypiszTrase(vector<int> sciezka) {
 
 // Mutacja osobnika
 Osobnik Genetyczny::Mutacja(Osobnik osobnik) {
-    uniform_int_distribution<int> dist(0, liczbaMiast - 1);
-    int pierwsza = dist(generator);
-    int druga = dist(generator);
+    uniform_int_distribution<int> dist(0, liczbaMiast - 1); // Narzędzie do losowania liczb z zakresu [0, liczbaMiast-1], gdzie każda liczba ma równą szansę
+    int pierwsza = dist(generator); // Losowanie pierwszego indeksu do zamiany z zakresem od 0 do liczbaMiast-1
+    int druga = dist(generator); // Losowanie drugiego indeksu do zamiany z zakresem od 0 do liczbaMiast-1
 
-    // Prostszy sposób na zapewnienie, że nie są takie same
+    // sposób na zapewnienie, że nie są takie same
     if (pierwsza == druga) {
-        druga = (pierwsza + 1) % liczbaMiast;
+        druga = (pierwsza + 1) % liczbaMiast; // jeśli są takie same, przesuwamy drugi indeks o 1 (zawijając się do 0, jeśli przekroczy liczbę miast)
     }
 
     swap(osobnik.chromosom[pierwsza], osobnik.chromosom[druga]);
@@ -82,43 +83,57 @@ Osobnik Genetyczny::Mutacja(Osobnik osobnik) {
 
 //Order Crossover (OX)
 Osobnik Genetyczny::KrzyzowanieOX(Osobnik &tata, Osobnik &mama) {
-    Osobnik dziecko; // Inicjalizacja dziecka jako nowego osobnika
-    int rozmiarRodzica = tata.chromosom.size(); // Pobranie rozmiaru chromosomu rodzica
+    Osobnik dziecko;
+    dziecko.chromosom.resize(liczbaMiast);
 
-    uniform_int_distribution<int> dist(0, rozmiarRodzica - 1);
+    // Krok 1: Wybieramy losowe punkty fragmentu do wycięcia
+    uniform_int_distribution<int> dist(0, liczbaMiast - 1);
     int punktPoczatkowy = dist(generator);
     int punktKoncowy = dist(generator);
 
     if (punktPoczatkowy > punktKoncowy) {
-        swap(punktPoczatkowy, punktKoncowy); // Zamiana punktów początkowego i końcowego, jeśli początkowy jest większy od końcowego
+        swap(punktPoczatkowy, punktKoncowy);
     }
 
-    dziecko.chromosom.resize(rozmiarRodzica); // Zmiana rozmiaru chromosomu dziecka na rozmiar rodzica (rezerwacja miejsca w pamięci)
+    // Krok 2: Tworzymy pomocniczą tablicę do śledzenia użytych genów (miast)
+    vector<bool> uzyteGeny(liczbaMiast, false); // Tworzy wektor flag (początkowo false) o rozmiarze liczbaMiast
+    // Indeksy w uzyteGeny odpowiadają miejscom (genom) w chromosomie, np. 'uzyteGeny[3] = true' oznacza, że miasto 3 zostało już użyte w dziecku
 
+    // Krok 3: Kopiujemy fragment chromosomu z taty do dziecka
+    // i oznaczamy skopiowane geny jako użyte
     for (int i = punktPoczatkowy; i <= punktKoncowy; ++i) {
-        dziecko.chromosom[i] = tata.chromosom[i]; // Kopiowanie fragmentu chromosomu taty do chromosomu dziecka
+        int gen = tata.chromosom[i];
+        dziecko.chromosom[i] = gen;
+        uzyteGeny[gen] = true; // Oznaczamy gen (miasto) jako użyty, np. uzyteGeny = {miasto0: false, miasto1: true, miasto2: false, ...}
     }
 
-    int indexDziecka = 0;
-    for (int i = 0; i < rozmiarRodzica; ++i) {
-        if (indexDziecka == punktPoczatkowy) {
-            indexDziecka = punktKoncowy + 1; // Ustawienie indeksu dziecka na pozycję za końcem wstawianego fragmentu
+    // Krok 4: Uzupełnij resztę chromosomu dziecka genami z mamy zaczynając od punktu końcowego
+    int indeksDziecka = (punktKoncowy + 1) % liczbaMiast; // % operator modulo zapewnia zawijanie do początku chromosomu jak przekroczymy jego długość
+    int indeksMamy = (punktKoncowy + 1) % liczbaMiast;
+
+    // Przejdź przez chromosom mamy, aby znaleźć brakujące geny
+    while (indeksDziecka != punktPoczatkowy) {
+        int genMamy = mama.chromosom[indeksMamy];
+
+        // Jeśli gen z mamy nie był jeszcze użyty, dodaj go do dziecka
+        if (!uzyteGeny[genMamy]) {
+            dziecko.chromosom[indeksDziecka] = genMamy;
+            uzyteGeny[genMamy] = true;
+            indeksDziecka = (indeksDziecka + 1) % liczbaMiast;
         }
 
-        if (find(dziecko.chromosom.begin(), dziecko.chromosom.end(), mama.chromosom[i]) == dziecko.chromosom.end()) {
-            dziecko.chromosom[indexDziecka] = mama.chromosom[i]; // Wstawianie wartości z chromosomu mamy do dziecka, jeśli nie występują jeszcze w miejscu wstawiania
-            ++indexDziecka;
-        }
+        // Zawsze przechodź do następnego genu w chromosomie mamy
+        indeksMamy = (indeksMamy + 1) % liczbaMiast;
     }
 
-    dziecko.koszt = obliczKoszt(dziecko.chromosom); // Obliczenie kosztu trasy dziecka
-    return dziecko; // Zwrócenie nowego osobnika
+    dziecko.koszt = obliczKoszt(dziecko.chromosom);
+    return dziecko;
 }
 
 
-
 // Generowanie początkowej populacji
-vector<Osobnik> Genetyczny::wygenerujPopulacje() {
+vector<Osobnik> Genetyczny::wygenerujPopulacje() { // Populacja początkowa - zbiór losowych tras, które będziemy optymalizować
+// Ocena tras zależy od danych z pliku (macierz kosztów)
     vector<Osobnik> populacja;
     Osobnik p;
 
@@ -126,7 +141,7 @@ vector<Osobnik> Genetyczny::wygenerujPopulacje() {
         for (int j = 0; j < liczbaMiast; j++) {
             p.chromosom.push_back(j);
         }
-        shuffle(p.chromosom.begin(), p.chromosom.end(), generator);
+        shuffle(p.chromosom.begin(), p.chromosom.end(), generator); // Mieszamy trasę losowo używając naszego generatora z klasy
         p.koszt = obliczKoszt(p.chromosom);
         populacja.push_back(p);
         p.chromosom.clear();
@@ -135,14 +150,13 @@ vector<Osobnik> Genetyczny::wygenerujPopulacje() {
     return populacja;
 }
 
-// Selekcja osobników w populacji metodą proporcjonalną
-// Nowa, poprawna wersja funkcji w Genetyczny.cpp
+// Selekcja osobników w populacji metodą turniejową
 Osobnik Genetyczny::selekcjaTurniejowa() {
-    int rozmiarTurnieju = 5;
-    if (populacja.empty()) return Osobnik(); // Zabezpieczenie na wszelki wypadek
+    int rozmiarTurnieju = 5; // Liczba uczestników w turnieju
+    if (populacja.empty()) return Osobnik(); // zwracamy pustego osobnika jeśli populacja jest pusta
 
     // Używamy naszego generatora z klasy
-    uniform_int_distribution<int> dist(0, populacja.size() - 1);
+    uniform_int_distribution<int> dist(0, populacja.size() - 1);  // Narzędzie do losowania indeksów z zakresu populacji
 
     // Pierwszy losowy uczestnik turnieju staje się tymczasowym zwycięzcą
     Osobnik najlepszyWTurnieju = populacja[dist(generator)];
@@ -159,13 +173,11 @@ Osobnik Genetyczny::selekcjaTurniejowa() {
 }
 // Główny algorytm genetyczny
 void Genetyczny::algorytm() {
-    // srand() nie jest już potrzebne, bo używamy generatora mt19937
-    // srand((unsigned)time(NULL));
 
     double czas = 0;
-    clock_t start = clock();
+    clock_t start = clock(); // Pobierz czas startu algorytmu
 
-    populacja = wygenerujPopulacje(); // Użyj zmiennej członkowskiej 'populacja'
+    populacja = wygenerujPopulacje(); // Inicjalizacja populacji początkowej
 
     // Główna pętla ewolucji
     do {
@@ -173,7 +185,7 @@ void Genetyczny::algorytm() {
         vector<Osobnik> nastepnaPopulacja;
 
         // 2. Elitaryzm: Zachowaj najlepszego osobnika z obecnej populacji
-        sort(populacja.begin(), populacja.end(), porownajKoszty);
+        sort(populacja.begin(), populacja.end(), porownajKoszty); // Sortujemy populację według kosztów (najlepszy na początku)
         nastepnaPopulacja.push_back(populacja.front());
 
         // 3. Wypełnij resztę nowej populacji przez selekcję, krzyżowanie i mutację
@@ -185,7 +197,7 @@ void Genetyczny::algorytm() {
             Osobnik dziecko;
 
             // Krzyżowanie z zadanym prawdopodobieństwem
-            uniform_real_distribution<> dist(0.0, 1.0);
+            uniform_real_distribution<> dist(0.0, 1.0); // Narzędzie do losowania liczb zmiennoprzecinkowych z zakresu [0.0, 1.0)
             if (dist(generator) < wspolczynnikKrzyzowania) {
                 dziecko = KrzyzowanieOX(tata, mama);
             } else {
@@ -194,7 +206,7 @@ void Genetyczny::algorytm() {
             }
 
             // Mutacja z zadanym prawdopodobieństwem
-            if (dist(generator) < wspolczynnikMutacji) {
+            if (dist(generator) < wspolczynnikMutacji) { // losowa liczba z zakresu [0.0, 1.0)
                 dziecko = Mutacja(dziecko);
             }
 

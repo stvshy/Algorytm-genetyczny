@@ -1,28 +1,38 @@
-#include <vector>
 #include "Menu.h"
 #include "Genetyczny.h"
 
 using namespace std;
 
+Menu::Menu() {
+    wielkoscPopulacji = 50;  // wartości domyślne
+    kryteriumStopu = 30;
+    wspolczynnikMutacji = 0.01;
+    wspolczynnikKrzyzowania = 0.8;
+    graf.wczytajPlik("a280.tsp");
+}
+
+void Menu::wyswietlAktualneParametry() {
+    cout << endl;
+    cout << " ------------------------------------------ " << endl;
+    cout << "         AKTUALNE PARAMETRY " << endl;
+    cout << " ------------------------------------------ " << endl;
+    cout << " 1. Zaladowany graf        : " << graf.nazwaZaladowanegoPliku << endl;
+    cout << " 2. Kryterium stopu        : " << kryteriumStopu << "s" << endl;
+    cout << " 3. Wielkosc populacji     : " << wielkoscPopulacji << endl;
+    cout << " 4. Wspolczynnik mutacji   : " << wspolczynnikMutacji << endl;
+    cout << " 5. Wspolczynnik krzyzowania : " << wspolczynnikKrzyzowania << endl;
+    cout << " ------------------------------------------ " << endl;
+}
 
 int Menu::mainMenu() {
 
-    // Ustawienie polskiej lokalizacji w celu poprawnego wyświetlania znaków
+    // Ustawienie polskiej lokalizacji w celu poprawnego wyświetlania polskich znaków w konsoli
     setlocale(LC_CTYPE, "Polish");
 
     // Wyświetlenie informacji o autorze i projekcie
-    cout << endl << "PEA, Projekt 3, Mateusz Staszkow, 263949" << endl;
+    cout << endl << "TIO, Projekt 1, Mateusz Staszkow, 263949" << endl;
 
     char wybor = 0;
-    string fileName = "";
-
-
-    int wielkoscPopulacji = 50;
-    int kryteriumStopu = 15;
-    double wspolczynnikMutacji = 0.01;
-    double wspolczynnikKrzyzowania = 0.8;
-//    int metodaKrzyzowania = 1;
-    string nazwa;
 
     while (true) {
         // Wyświetlenie menu
@@ -35,7 +45,8 @@ int Menu::mainMenu() {
              << "3. Ustaw wielkosc populacji poczatkowej" << endl
              << "4. Ustaw wspolczynnik mutacji" << endl
              << "5. Ustaw wspolczynnik krzyzowania" << endl
-             << "6. Rozwiaz algorytmem genetycznym" << endl
+             << "6. Wyswietl aktualne parametry" << endl
+             << "7. Rozwiaz algorytmem genetycznym" << endl
              << "0. Wyjscie" << endl << endl;
         cout << "Wpisz swoj wybor: ";
         // Odczytanie wyboru użytkownika
@@ -71,12 +82,17 @@ int Menu::mainMenu() {
                 cout << endl;
                 break;
             case '6':
-                if (!graf.macierzKosztow.empty()) {
+                wyswietlAktualneParametry();
+                break;
+            case '7':
+                if (!graf.macierzKosztow.empty()) { // Sprawdzenie, czy graf jest załadowany
                     Genetyczny genetyczny(graf, kryteriumStopu, wielkoscPopulacji, wspolczynnikMutacji, wspolczynnikKrzyzowania);
                     genetyczny.algorytm();
                     cout << "Koszt: " << genetyczny.najlepszeRozwiazanie.koszt << endl;
                     cout << "Czas najl. rozw.: " <<genetyczny.czasNajlepszegoRozwiazania << endl;
                     genetyczny.wypiszTrase(genetyczny.najlepszeRozwiazanie.chromosom);
+                } else {
+                    cout << "Graf nie jest zaladowany! Wczytaj dane z pliku." << endl;
                 }
                 break;
             case '0':
