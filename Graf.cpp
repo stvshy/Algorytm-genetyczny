@@ -108,10 +108,10 @@ void Graf::wczytajPlik() {
     cout << "Wprowadz nazwe pliku z danymi: ";
 
     // Czyszczenie bufora po `cin >> wybor` z menu
-    if (cin.peek() == '\n') {
-        cin.ignore();
+    if (cin.peek() == '\n') { // Jeśli następny znak to nowa linia
+        cin.ignore(); // Ignorujemy ją, aby getline działało poprawnie
     }
-    getline(cin, nazwaPliku);
+    getline(cin, nazwaPliku); // Wczytanie całej linii jako nazwy pliku
 
     if (nazwaPliku.empty()) {
         cout << "Anulowano wczytywanie nowego pliku." << endl;

@@ -9,22 +9,46 @@ struct Osobnik {
     vector<int> chromosom;
     int koszt;
 };
+enum class MetodaSelekcji {
+    TURNIEJOWA,
+    RULETKOWA,
+    RANKINGOWA
+};
 
+enum class MetodaKrzyzowania {
+    OX, // Order Crossover
+    PBX // Position-Based Crossover
+};
+
+enum class MetodaMutacji {
+    ZAMIANA,    // Swap
+    INWERSJA,   // Inversion
+    WSTAWIANIE  // Insert
+};
 class Genetyczny {
 private:
     vector<vector<int>> macierzKosztow;
-    Graf graf;
-//    int rozmiar; // ile miast
     int wielkoscPopulacji; // wielkosc populacji
-//    int metodaKrzyzowania;
+
     double wspolczynnikMutacji; // wspolczynnik mutacji
     double wspolczynnikKrzyzowania; // wspolczynnik krzyzowania
-    vector<Osobnik> populacja; // chromosom
-    // Po zmianie
+    vector<Osobnik> populacja; // populacja osobnikow
+
+    MetodaSelekcji wybranaMetodaSelekcji;
+    MetodaKrzyzowania wybranaMetodaKrzyzowania;
+    MetodaMutacji wybranaMetodaMutacji;
+
     Osobnik selekcjaTurniejowa();
-    Osobnik Mutacja(Osobnik osobnik);
-    Osobnik KrzyzowanieOX(Osobnik &tata, Osobnik &mama);
-//    Osobnik KrzyzowaniePBX(Osobnik &tata, Osobnik &mama);
+    Osobnik selekcjaRuletkowa();
+    Osobnik selekcjaRankingowa();
+
+    void MutacjaZamiana(Osobnik &osobnik);
+    void MutacjaInwersja(Osobnik &osobnik);
+    void MutacjaWstawienie(Osobnik &osobnik);
+
+    Osobnik KrzyzowanieOX(const Osobnik &tata, const Osobnik &mama);
+    Osobnik KrzyzowaniePBX(const Osobnik &tata, const Osobnik &mama);
+
     vector<Osobnik> wygenerujPopulacje();
     static bool porownajKoszty(const Osobnik &pierwsza, const Osobnik &druga);
     int obliczKoszt(const vector<int> &sciezka);
@@ -36,11 +60,11 @@ public:
 
     Osobnik najlepszeRozwiazanie; // najlepsze znalezione rozwiazanie
     Genetyczny();
-    Genetyczny(Graf graf, int czas, int wielkoscPopulacji, double wspolczynnikMutacji, double wspolczynnikKrzyzowania);
+    Genetyczny(Graf& graf, int czas, int wielkoscPopulacji, double wspolczynnikMutacji, double wspolczynnikKrzyzowania,
+               MetodaSelekcji metodaSelekcji, MetodaKrzyzowania metodaKrzyzowania, MetodaMutacji metodaMutacji);
     ~Genetyczny();
     void wypiszTrase(const vector<int> &sciezka);
-    void algorytm();
-
+    void algorytm(bool trybCichy = false);
 };
 
 

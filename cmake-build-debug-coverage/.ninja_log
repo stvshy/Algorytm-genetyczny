@@ -1,6 +1,2 @@
 # ninja log v5
-5	3258	7259198798461143	CMakeFiles/PEA_3.dir/main.cpp.obj	de1cd8381d783d4e
-1	3723	7259198803518658	CMakeFiles/PEA_3.dir/Graf.cpp.obj	fbd36967be616ec3
-3019	5051	7273834885541927	PEA_3.exe	4e55b0c51a9f0569
-3	2295	7273834858089713	CMakeFiles/PEA_3.dir/Menu.cpp.obj	470a59e76afbd9b
-91	3018	7273834865310688	CMakeFiles/PEA_3.dir/Genetyczny.cpp.obj	8c3260b224e609ea
+1	23	0	clean	3ac1ac369df1e668

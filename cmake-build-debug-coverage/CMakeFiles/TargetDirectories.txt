@@ -1,3 +1,4 @@
-C:/Users/Mati/OneDrive/Dokumenty/TIO/PROJEKT 1/TIO 1/cmake-build-debug-coverage/CMakeFiles/PEA_3.dir
+C:/Users/Mati/OneDrive/Dokumenty/TIO/PROJEKT 1/TIO 1/cmake-build-debug-coverage/CMakeFiles/MenuApp.dir
+C:/Users/Mati/OneDrive/Dokumenty/TIO/PROJEKT 1/TIO 1/cmake-build-debug-coverage/CMakeFiles/TestRunnerApp.dir
 C:/Users/Mati/OneDrive/Dokumenty/TIO/PROJEKT 1/TIO 1/cmake-build-debug-coverage/CMakeFiles/edit_cache.dir
 C:/Users/Mati/OneDrive/Dokumenty/TIO/PROJEKT 1/TIO 1/cmake-build-debug-coverage/CMakeFiles/rebuild_cache.dir

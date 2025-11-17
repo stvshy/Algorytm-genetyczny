@@ -3,6 +3,7 @@
 
 #include "Graf.h"
 #include <iostream>
+#include "Genetyczny.h"
 
 class Menu {
 private:
@@ -10,6 +11,14 @@ private:
     int kryteriumStopu;
     double wspolczynnikMutacji;
     double wspolczynnikKrzyzowania;
+
+    MetodaSelekcji wybranaMetodaSelekcji;
+    MetodaKrzyzowania wybranaMetodaKrzyzowania;
+    MetodaMutacji wybranaMetodaMutacji;
+
+    string selekcjaToString(MetodaSelekcji metoda);
+    string krzyzowanieToString(MetodaKrzyzowania metoda);
+    string mutacjaToString(MetodaMutacji metoda);
 public:
     Graf graf;
     Menu();
